@@ -2,12 +2,13 @@ name: Crypto Data Tracker
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Runs every 15 minutes
+    - cron: '*/15 * * * *'  # Runs every 15 minutes
   workflow_dispatch:
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,9 +22,23 @@ jobs:
         run: |
           pip install requests gspread oauth2client
 
-      - name: Run script
+      - name: Write creds.json and Debug it
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
+          echo "===== WRITING CREDS.JSON ====="
           printf "%s" "$GCP_CREDENTIALS" > creds.json
+
+          echo "===== FILE CONTENT START ====="
+          cat creds.json || echo "creds.json not found!"
+          echo "===== FILE CONTENT END ====="
+
+          echo "===== CHECK FILE TYPE ====="
+          file creds.json || echo "File missing"
+
+          echo "===== CHECK JSON VALIDITY ====="
+          python3 -c "import json; json.load(open('creds.json'))" && echo "JSON is valid ✅" || echo "Invalid JSON ❌"
+
+      - name: Run script
+        run: |
           python update_crypto_sheet.py
