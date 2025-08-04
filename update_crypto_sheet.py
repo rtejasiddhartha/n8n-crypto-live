@@ -87,7 +87,8 @@ def send_telegram_alert(coin):
     payload = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "HTML"
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True  # 👈 disables that CoinGecko box preview
     }
 
     response = requests.post(url, data=payload)
