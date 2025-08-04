@@ -3,77 +3,81 @@ import json
 import gspread
 import requests
 from datetime import datetime
-from zoneinfo import ZoneInfo  # Python 3.9+ for timezones
 from oauth2client.service_account import ServiceAccountCredentials
+import locale
 
-# ---- Google Sheets Authorization using GCP_CREDENTIALS from ENV ----
+# Set INR formatting
+locale.setlocale(locale.LC_ALL, 'en_IN')
+
+def format_inr(value):
+    try:
+        return f"₹{locale.format_string('%d', int(value), grouping=True)}"
+    except:
+        return "N/A"
+
+# Label trend
+def label_trend(pct):
+    if pct > 0.05:
+        return "🚀 Bullish"
+    elif pct < -0.05:
+        return "🧊 Bearish"
+    else:
+        return "⚖️ Sideways"
+
+# Auth with GCP credentials
 service_account_info = json.loads(os.environ["GCP_CREDENTIALS"])
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 gc = gspread.authorize(credentials)
 
-# ---- Open Google Sheet ----
+# Open Google Sheet
 sheet = gc.open_by_key("1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg")
 worksheet = sheet.worksheet("Crypto-workflow")
 
-# ---- Fetch top 10 INR coins from CoinGecko ----
+# Fetch top 50 coins
 response = requests.get("https://api.coingecko.com/api/v3/coins/markets", params={
     "vs_currency": "inr",
     "order": "market_cap_desc",
-    "per_page": 10,
+    "per_page": 50,
     "page": 1,
     "price_change_percentage": "24h"
 })
 coins = response.json()
 
-# ---- Format and append each row to sheet ----
-for coin in coins:
-    price = coin["current_price"]
-    high = coin["high_24h"]
-    low = coin["low_24h"]
+# Format records
+now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+formatted_rows = []
 
-    # Trend and Emoji
-    change_pct = coin["price_change_percentage_24h"]
-    trend = "Bullish 🔥" if change_pct > 5 else "Bearish ❄️" if change_pct < -5 else "Sideways ⚖️"
-    emoji = "🚀" if "Bullish" in trend else "📉" if "Bearish" in trend else "⚖️"
+# Sort logic for top categories
+top_gainers = sorted(coins, key=lambda x: x['price_change_percentage_24h'] or 0, reverse=True)[:5]
+top_losers = sorted(coins, key=lambda x: x['price_change_percentage_24h'] or 0)[:5]
+top_volume = sorted(coins, key=lambda x: x['total_volume'], reverse=True)[:5]
+top_market_cap = sorted(coins, key=lambda x: x['market_cap'], reverse=True)[:5]
 
-    # ATH insight
-    ath_diff = ((coin["ath"] - price) / coin["ath"]) * 100 if coin["ath"] else 0
-    ath_label = "🟢 Near ATH" if ath_diff < 10 else "🟡 Watch Zone" if ath_diff < 25 else "🔴 Far Below ATH"
+# Merge all unique coins from these top sets
+top_combined = {coin['id']: coin for coin in top_gainers + top_losers + top_volume + top_market_cap}
 
-    # 24h range insight
-    range_pos = ((price - low) / (high - low)) * 100 if high != low else 0
-    range_label = (
-        "🔼 Near 24h High" if range_pos >= 80 else
-        "🔽 Near 24h Low" if range_pos <= 20 else
-        "⚖️ In the Middle"
-    )
-    range_str = f"{range_label} ({range_pos:.1f}%)"
+for coin in top_combined.values():
+    name = coin.get("name")
+    symbol = coin.get("symbol").upper()
+    price = format_inr(coin.get("current_price"))
+    change = coin.get("price_change_percentage_24h") or 0.0
+    market_cap = format_inr(coin.get("market_cap"))
+    volume = format_inr(coin.get("total_volume"))
+    rank = coin.get("market_cap_rank")
+    chart_link = f"https://www.coingecko.com/en/coins/{coin.get('id')}"
+    trend_label = label_trend(change)
 
-    # Volatility
-    volatility = ((high - low) / price) * 100 if price else 0
-    volatility_badge = (
-        "🔥 High Volatility" if volatility > 10 else
-        "🟦 Medium Volatility" if volatility > 5 else
-        "🟩 Low Volatility"
-    )
+    formatted_rows.append([
+        name, symbol, f"{change:.4f}", price, market_cap, volume,
+        rank, trend_label, chart_link, now
+    ])
 
-    # Append row to sheet
-    worksheet.append_row([
-        coin["name"],                                 # Coin
-        coin["symbol"].upper(),                       # Symbol
-        emoji,                                        # Trend Emoji
-        trend,                                        # Trend
-        f"{change_pct:.2f}%",                         # 24h Change
-        f"₹{price:,}",                                # Current Price
-        f"₹{coin['market_cap']:,}",                   # Market Cap
-        f"₹{coin['total_volume']:,}",                 # 24h Volume
-        coin["market_cap_rank"],                      # Global Rank
-        ath_label,                                    # ATH Insight
-        range_str,                                    # 24h Range
-        volatility_badge,                             # Volatility
-        f"https://www.coingecko.com/en/coins/{coin['id']}",  # Chart Link
-        datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")  # IST timestamp
-    ], value_input_option="USER_ENTERED")
-
-print("✅ update_crypto_sheet.py completed and rows appended to Google Sheets.")
+# Push to sheet (replace or append)
+headers = [
+    "Coin", "Symbol", "24h Change (%)", "Current Price", "Market Cap",
+    "24h Volume", "Global Rank", "Trend", "Chart Link", "Updated At"
+]
+worksheet.clear()
+worksheet.append_row(headers)
+worksheet.append_rows(formatted_rows)
