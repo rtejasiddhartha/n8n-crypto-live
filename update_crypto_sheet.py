@@ -5,7 +5,7 @@ import requests
 from datetime import datetime, timedelta
 from oauth2client.service_account import ServiceAccountCredentials
 
-# INR formatter (international commas)
+# INR formatter
 def format_inr(value):
     try:
         return f"₹{int(value):,}"
@@ -21,7 +21,7 @@ def label_trend(pct):
     else:
         return "⚖️ Sideways"
 
-# IST timestamp
+# IST time
 def get_ist_time():
     return (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -31,11 +31,11 @@ scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/au
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 gc = gspread.authorize(credentials)
 
-# Google Sheet
+# Sheet
 sheet = gc.open_by_key("1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg")
 worksheet = sheet.worksheet("Crypto-workflow")
 
-# Fetch 50 coins
+# Fetch coins
 response = requests.get("https://api.coingecko.com/api/v3/coins/markets", params={
     "vs_currency": "inr",
     "order": "market_cap_desc",
@@ -44,46 +44,37 @@ response = requests.get("https://api.coingecko.com/api/v3/coins/markets", params
     "price_change_percentage": "24h"
 })
 coins = response.json()
-
-# Time
 now_ist = get_ist_time()
 
-# Top 5 sets
-top_gainers = sorted(coins, key=lambda x: x['price_change_percentage_24h'] or 0, reverse=True)[:5]
-top_losers = sorted(coins, key=lambda x: x['price_change_percentage_24h'] or 0)[:5]
-top_volume = sorted(coins, key=lambda x: x['total_volume'], reverse=True)[:5]
-top_market_cap = sorted(coins, key=lambda x: x['market_cap'], reverse=True)[:5]
+# Sort coins by trend categories
+bullish = []
+sideways = []
+bearish = []
 
-# Unique coins
-top_combined = {coin['id']: coin for coin in top_gainers + top_losers + top_volume + top_market_cap}
+for coin in coins:
+    pct = coin.get("price_change_percentage_24h") or 0.0
+    trend = label_trend(pct)
+    entry = [
+        coin.get("name"),
+        coin.get("symbol").upper(),
+        f"{pct:.4f}",
+        format_inr(coin.get("current_price")),
+        format_inr(coin.get("market_cap")),
+        format_inr(coin.get("total_volume")),
+        coin.get("market_cap_rank"),
+        trend,
+        f"https://www.coingecko.com/en/coins/{coin.get('id')}",
+        now_ist
+    ]
+    if trend == "🚀 Bullish" and len(bullish) < 5:
+        bullish.append(entry)
+    elif trend == "⚖️ Sideways" and len(sideways) < 5:
+        sideways.append(entry)
+    elif trend == "🧊 Bearish" and len(bearish) < 5:
+        bearish.append(entry)
 
-# Format data
-rows = []
-for coin in top_combined.values():
-    name = coin.get("name")
-    symbol = coin.get("symbol").upper()
-    price = format_inr(coin.get("current_price"))
-    change = coin.get("price_change_percentage_24h") or 0.0
-    market_cap = format_inr(coin.get("market_cap"))
-    volume = format_inr(coin.get("total_volume"))
-    rank = coin.get("market_cap_rank")
-    chart_link = f"https://www.coingecko.com/en/coins/{coin.get('id')}"
-    trend_label = label_trend(change)
+# Combine all rows: Bullish > Sideways > Bearish
+rows_sorted = bullish + sideways + bearish
 
-    rows.append([
-        name, symbol, f"{change:.4f}", price, market_cap, volume,
-        rank, trend_label, chart_link, now_ist
-    ])
-
-# Sort by Trend order: Bullish > Sideways > Bearish
-trend_order = {"🚀 Bullish": 1, "⚖️ Sideways": 2, "🧊 Bearish": 3}
-rows_sorted = sorted(rows, key=lambda x: trend_order.get(x[7], 99))
-
-# Write to sheet
-headers = [
-    "Coin", "Symbol", "24h Change (%)", "Current Price", "Market Cap",
-    "24h Volume", "Global Rank", "Trend", "Chart Link", "Updated At"
-]
-worksheet.clear()
-worksheet.append_row(headers)
+# Append rows (no headers)
 worksheet.append_rows(rows_sorted)
