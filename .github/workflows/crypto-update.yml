@@ -2,7 +2,7 @@ name: Crypto Pulse Update
 
 on:
   schedule:
-    - cron: "*/15 * * * *"  # Every 15 minutes
+    - cron: '0,15,30,45 * * * *'
   workflow_dispatch:        # Allow manual trigger
 
 jobs:
