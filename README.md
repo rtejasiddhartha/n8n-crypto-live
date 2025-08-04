@@ -136,7 +136,7 @@ These must be added as **GitHub Secrets** for the Actions workflow to function.
 
 ## 📬 Author
 
-> Maintained by [@yourgithub](https://github.com/yourgithub)  
-> Say hi on Telegram [@yourhandle] or [LinkedIn](https://linkedin.com/in/yourprofile)
+> Maintained by [@rtejasiddhartha]((https://github.com/rtejasiddhartha/))  
+> Say hi on Telegram [@hamada5811] or [LinkedIn][(https://www.linkedin.com/in/rtejasiddhartha/)]
 
 ---
