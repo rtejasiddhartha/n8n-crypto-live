@@ -6,6 +6,18 @@ import time
 from datetime import datetime, timedelta
 from oauth2client.service_account import ServiceAccountCredentials
 
+def log_trigger_to_sheet(trigger_type="schedule", status="✅ Success"):
+    try:
+        utc_now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        ist_now = (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
+        log_row = [utc_now, ist_now, trigger_type, status]
+
+        log_ws = gc.open_by_key("1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg").worksheet("Trigger-Logs")
+        log_ws.append_row(log_row)
+        print(f"✅ Logged trigger to sheet at {ist_now}")
+    except Exception as e:
+        print("❌ Failed to log trigger:", e)
+        
 # Align to 00,15,30,45 before proceeding
 def wait_until_next_slot():
     now = datetime.utcnow() + timedelta(hours=5, minutes=30)
