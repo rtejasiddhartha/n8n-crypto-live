@@ -7,11 +7,14 @@ from oauth2client.service_account import ServiceAccountCredentials
 import locale
 
 # Set INR formatting
-locale.setlocale(locale.LC_ALL, 'en_IN')
-
 def format_inr(value):
     try:
-        return f"₹{locale.format_string('%d', int(value), grouping=True)}"
+        # Manual INR-style formatting: 1,23,45,678
+        s = f"{int(value):,}"
+        parts = s.split(",")
+        if len(parts) <= 2:
+            return f"₹{s}"
+        return f"₹{parts[0]},{''.join(parts[1:-1])},{parts[-1]}"
     except:
         return "N/A"
 
