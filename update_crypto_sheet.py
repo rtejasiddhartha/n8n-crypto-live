@@ -112,3 +112,17 @@ rows_sorted = bullish + sideways + bearish
 
 # Append to sheet (no headers)
 worksheet.append_rows(rows_sorted)
+
+def send_telegram_alert(summary_text):
+    telegram_token = os.environ["TELEGRAM_BOT_TOKEN"]
+    chat_id = "@crypto_pulse_workflow_bot"
+    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+
+    payload = {
+        "chat_id": chat_id,
+        "text": summary_text,
+        "parse_mode": "HTML"
+    }
+
+    response = requests.post(url, data=payload)
+    print("Telegram response:", response.status_code, response.text)
