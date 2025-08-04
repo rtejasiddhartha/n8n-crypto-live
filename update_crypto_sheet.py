@@ -13,13 +13,13 @@ gc = gspread.authorize(credentials)
 
 # Open sheet
 sheet = gc.open_by_key("1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg")
-worksheet = sheet.worksheet("CryptoPulseAlerts")
+worksheet = sheet.worksheet("Crypto-workflow")
 
-# Fetch top 5 INR coins
+# Fetch top 10 INR coins
 response = requests.get("https://api.coingecko.com/api/v3/coins/markets", params={
     "vs_currency": "inr",
     "order": "market_cap_desc",
-    "per_page": 5,
+    "per_page": 10,
     "page": 1,
     "price_change_percentage": "24h"
 })
