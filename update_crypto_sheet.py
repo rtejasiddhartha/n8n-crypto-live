@@ -5,14 +5,14 @@ import requests
 from datetime import datetime, timedelta
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Format INR numbers
+# INR formatting
 def format_inr(value):
     try:
         return f"₹{int(value):,}"
     except:
         return "N/A"
 
-# Trend labeling
+# Trend classification
 def label_trend(pct):
     if pct > 0.05:
         return "🚀", "Bullish 🔥"
@@ -21,7 +21,6 @@ def label_trend(pct):
     else:
         return "⚖️", "Sideways ⚖️"
 
-# Placeholder insight logic (can be improved with ATH data later)
 def dummy_ath_insight(change):
     if change > 0.05:
         return "🟢 Near ATH"
@@ -30,7 +29,6 @@ def dummy_ath_insight(change):
     else:
         return "🔴 Far Below ATH"
 
-# Placeholder range logic
 def dummy_range(change):
     if change > 0.04:
         return "🔼 Near 24h High (100.0%)"
@@ -39,7 +37,6 @@ def dummy_range(change):
     else:
         return "🔽 Near 24h Low (20.0%)"
 
-# Placeholder volatility logic
 def dummy_volatility(change):
     if abs(change) > 5:
         return "🔥 High Volatility"
@@ -48,21 +45,50 @@ def dummy_volatility(change):
     else:
         return "🟩 Low Volatility"
 
-# Get IST time
 def get_ist_time():
     return (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
 
-# Auth
+# Telegram Summary Generator
+def format_summary(bullish, sideways, bearish, now_ist):
+    def format_group(title, coins):
+        if not coins:
+            return f"<u><b>{title}</b></u>\n• None"
+        return f"<u><b>{title}</b></u>\n" + "\n".join([
+            f"• {c[0]} ({c[1]}) – {c[4]} – {c[5]}" for c in coins
+        ])
+    
+    return f"""<b>📊 CryptoPulse 15-Min Summary</b>\n\n""" + \
+           format_group("🚀 Bullish Coins", bullish) + "\n\n" + \
+           format_group("⚖️ Sideways", sideways) + "\n\n" + \
+           format_group("🧊 Bearish Coins", bearish) + f"""\n\n📅 Updated: {now_ist}
+📈 Source: CoinGecko (INR) | 🔁 GitHub Actions"""
+
+# Telegram Sender
+def send_telegram_alert(summary_text):
+    telegram_token = os.environ["TELEGRAM_BOT_TOKEN"]
+    chat_id = "@cryptopulsebot_in"  # Your channel
+    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+
+    payload = {
+        "chat_id": chat_id,
+        "text": summary_text,
+        "parse_mode": "HTML"
+    }
+
+    response = requests.post(url, data=payload)
+    print("Telegram response:", response.status_code, response.text)
+
+# Auth with GCP
 service_account_info = json.loads(os.environ["GCP_CREDENTIALS"])
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 gc = gspread.authorize(credentials)
 
-# Google Sheet
+# Google Sheet setup
 sheet = gc.open_by_key("1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg")
 worksheet = sheet.worksheet("Crypto-workflow")
 
-# Get 50 coins
+# Fetch coins
 response = requests.get("https://api.coingecko.com/api/v3/coins/markets", params={
     "vs_currency": "inr",
     "order": "market_cap_desc",
@@ -73,12 +99,12 @@ response = requests.get("https://api.coingecko.com/api/v3/coins/markets", params
 coins = response.json()
 now_ist = get_ist_time()
 
-# Grouped lists
+# Group coins
 bullish = []
 sideways = []
 bearish = []
+rows_sorted = []
 
-# Process coins
 for coin in coins:
     pct = coin.get("price_change_percentage_24h") or 0.0
     emoji, trend_text = label_trend(pct)
@@ -98,8 +124,8 @@ for coin in coins:
         f"https://www.coingecko.com/en/coins/{coin.get('id')}",  # Chart Link
         now_ist                                     # Updated At
     ]
-    
-    # Limit to 5 per category
+
+    # Group + Limit
     if emoji == "🚀" and len(bullish) < 5:
         bullish.append(row)
     elif emoji == "⚖️" and len(sideways) < 5:
@@ -107,22 +133,10 @@ for coin in coins:
     elif emoji == "🧊" and len(bearish) < 5:
         bearish.append(row)
 
-# Final sorted list
+# Sheet write
 rows_sorted = bullish + sideways + bearish
-
-# Append to sheet (no headers)
 worksheet.append_rows(rows_sorted)
 
-def send_telegram_alert(summary_text):
-    telegram_token = os.environ["TELEGRAM_BOT_TOKEN"]
-    chat_id = "@crypto_pulse_workflow_bot"
-    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
-
-    payload = {
-        "chat_id": chat_id,
-        "text": summary_text,
-        "parse_mode": "HTML"
-    }
-
-    response = requests.post(url, data=payload)
-    print("Telegram response:", response.status_code, response.text)
+# Telegram message
+summary_message = format_summary(bullish, sideways, bearish, now_ist)
+send_telegram_alert(summary_message)
