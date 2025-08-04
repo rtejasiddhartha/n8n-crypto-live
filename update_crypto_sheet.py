@@ -48,6 +48,7 @@ for coin in coins:
     worksheet.append_row([
         coin["name"],
         coin["symbol"].upper(),
+        emoji,
         trend,
         change,
         f"₹{price}",
@@ -59,5 +60,5 @@ for coin in coins:
         volatility_badge,
         f"https://www.coingecko.com/en/coins/{coin['id']}",
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        emoji
+
     ], value_input_option="USER_ENTERED")
