@@ -1,23 +1,31 @@
+import os
 import json
 import gspread
 import requests
 from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Load credentials from the local creds.json file
-with open("creds.json") as f:
-    service_account_info = json.load(f)
+# Load creds.json and handle errors
+try:
+    with open("creds.json", "r") as f:
+        service_account_info = json.load(f)
+except json.JSONDecodeError as e:
+    print("❌ JSON decode error:", e)
+    with open("creds.json", "r") as f:
+        print("creds.json content:")
+        print(f.read())
+    raise SystemExit("Stopping due to invalid creds.json")
 
-# Setup Google Sheets client
+# Authenticate
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 gc = gspread.authorize(credentials)
 
-# Google Sheet and worksheet
-sheet = gc.open_by_key("1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg")
-worksheet = sheet.worksheet("Crypto-workflow")
+# Google Sheet ID and worksheet name
+SHEET_ID = "1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg"
+WORKSHEET_NAME = "Crypto-workflow"
 
-# Fetch CoinGecko INR data
+# Fetch top 5 INR coins from CoinGecko
 url = "https://api.coingecko.com/api/v3/coins/markets"
 params = {
     "vs_currency": "inr",
@@ -29,7 +37,11 @@ params = {
 response = requests.get(url, params=params)
 data = response.json()
 
-# Append rows
+# Open sheet
+sheet = gc.open_by_key(SHEET_ID)
+worksheet = sheet.worksheet(WORKSHEET_NAME)
+
+# Append new rows
 for coin in data:
     row = [
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -41,3 +53,5 @@ for coin in data:
         f'₹{coin["total_volume"]}'
     ]
     worksheet.append_row(row, value_input_option="USER_ENTERED")
+
+print("✅ Successfully updated Google Sheet with top 5 coins.")
