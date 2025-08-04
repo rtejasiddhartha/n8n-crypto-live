@@ -1,29 +1,29 @@
-name: Crypto Data Tracker
+name: Crypto Pulse Update
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes
-  workflow_dispatch:
+    - cron: "*/15 * * * *"  # Every 15 minutes
+  workflow_dispatch:        # Allow manual trigger
 
 jobs:
-  run:
+  update:
     runs-on: ubuntu-latest
 
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+
     steps:
-      - name: Checkout code
+      - name: Checkout Repo
         uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          pip install requests gspread oauth2client
+      - name: Install Dependencies
+        run: pip install gspread oauth2client requests
 
-      - name: Run update script
-        env:
-          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-        run: |
-          python update_crypto_sheet.py
+      - name: Run Script
+        run: python update_crypto_sheet.py
