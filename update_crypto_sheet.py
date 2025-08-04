@@ -1,14 +1,12 @@
-# update_crypto_sheet.py
-
-import os
 import json
 import gspread
 import requests
 from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Load credentials from the environment variable
-service_account_info = json.loads(os.environ["GCP_CREDENTIALS"])
+# Load credentials from creds.json file written by GitHub Actions
+with open("creds.json") as f:
+    service_account_info = json.load(f)
 
 # Setup Google Sheets client
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -16,8 +14,8 @@ credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_i
 gc = gspread.authorize(credentials)
 
 # Google Sheet ID and worksheet name (you must set these)
-SHEET_ID = "YOUR_SHEET_ID"
-WORKSHEET_NAME = "Sheet1"
+SHEET_ID = "1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg"
+WORKSHEET_NAME = "Crypto-workflow"
 
 # Fetch CoinGecko top 5 INR coins as an example
 url = "https://api.coingecko.com/api/v3/coins/markets"
@@ -32,8 +30,8 @@ response = requests.get(url, params=params)
 data = response.json()
 
 # Open sheet
-sheet = gc.open_by_key("1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg")
-worksheet = sheet.worksheet("Crypto-workflow")
+sheet = gc.open_by_key(SHEET_ID)
+worksheet = sheet.worksheet(WORKSHEET_NAME)
 
 # Append rows
 for coin in data:
