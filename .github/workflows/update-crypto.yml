@@ -1,14 +1,16 @@
 name: Update Crypto Data
 
 on:
+  schedule:
+    - cron: '*/15 * * * *'  # Runs every 15 minutes
   workflow_dispatch:
 
 jobs:
-  debug:
+  run:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -20,22 +22,8 @@ jobs:
         run: |
           pip install requests gspread oauth2client
 
-      - name: Debug Secret Value (Masked in log)
+      - name: Run update_crypto_sheet.py
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          echo "==> START SECRET VALUE"
-          echo "${{ secrets.GCP_CREDENTIALS }}"
-          echo "==> END SECRET VALUE"
-
-      - name: Write creds.json
-        run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" > creds.json
-          echo "==> creds.json written"
-          cat creds.json | head -n 5
-
-      - name: Confirm file exists
-        run: |
-          ls -la
-          cat creds.json | jq '.' || echo "Invalid JSON!"
-
-      - name: Run script
-        run: python update_crypto_sheet.py
+          python update_crypto_sheet.py
