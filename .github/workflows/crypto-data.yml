@@ -25,5 +25,5 @@ jobs:
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" > creds.json
+          printf "%s" "$GCP_CREDENTIALS" > creds.json
           python update_crypto_sheet.py

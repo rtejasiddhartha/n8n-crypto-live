@@ -1,10 +1,11 @@
+import os
 import json
 import gspread
 import requests
 from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Load credentials from creds.json file written by GitHub Actions
+# Load credentials from creds.json file
 with open("creds.json") as f:
     service_account_info = json.load(f)
 
@@ -13,11 +14,11 @@ scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/au
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
 gc = gspread.authorize(credentials)
 
-# Google Sheet ID and worksheet name (you must set these)
+# Sheet and worksheet
 SHEET_ID = "1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg"
 WORKSHEET_NAME = "Crypto-workflow"
 
-# Fetch CoinGecko top 5 INR coins as an example
+# Fetch CoinGecko top 5 INR coins
 url = "https://api.coingecko.com/api/v3/coins/markets"
 params = {
     "vs_currency": "inr",
@@ -29,7 +30,7 @@ params = {
 response = requests.get(url, params=params)
 data = response.json()
 
-# Open sheet
+# Open sheet and worksheet
 sheet = gc.open_by_key(SHEET_ID)
 worksheet = sheet.worksheet(WORKSHEET_NAME)
 
