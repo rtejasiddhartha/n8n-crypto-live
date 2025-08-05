@@ -1,136 +1,115 @@
-# 🚀 CryptoPulse Alerts
+# 🧠 CryptoPulse: GitHub Workflow-Based Crypto Automation (Failed Attempt)
 
-Real-Time Cryptocurrency Analytics & Alerting System  
-Built using **n8n (for prototyping)** and **GitHub Actions + Python (for production)**
+## 📌 Overview
 
----
+This project was an experimental attempt to automate a **15-minute interval crypto monitoring system** using:
 
-## 📌 Project Summary
-
-**CryptoPulse Alerts** is a live crypto tracking and alert system that:
-
-- Fetches real-time INR-based data from the **CoinGecko API**
-- Categorizes top 50 coins into:
-  - 🚀 Bullish  
-  - ⚖️ Sideways  
-  - 🧊 Bearish  
-- Logs the top 15 (5 per category) to **Google Sheets**
-- Sends **Telegram alerts** every 15 minutes
-- Powers a **Google Looker Studio dashboard** for interactive analysis
+- **CoinGecko API** – to fetch live top coin data
+- **Google Sheets** – to log every cycle for dashboard use
+- **Telegram Bot** – to send alerts with trend, volume, and volatility
+- **GitHub Actions** – to trigger the automation every 15 minutes
 
 ---
 
-## 🎯 Key Features
+## 🎯 Objective
 
-| Feature                       | Tech Used                         |
-|------------------------------|-----------------------------------|
-| 🔁 Automation Engine          | GitHub Actions (cron every 15 min)|
-| 🔧 Visual Workflow Prototyping| n8n 2025+                         |
-| 🧠 Market Data                | CoinGecko API                     |
-| 📊 Storage                   | Google Sheets via Service Account |
-| 📈 Dashboarding               | Google Looker Studio              |
-| 📣 Alerts                    | Telegram Bot API (HTML mode)     |
-| 💰 Cost                      | 💯 100% Free Tier Only            |
+Build a low-cost, GitHub-powered crypto bot that could:
+- Run every 15 minutes (00, 15, 30, 45)
+- Log data consistently into Google Sheets
+- Alert via Telegram with live insights
+- Act as a backend engine for real-time dashboards
 
 ---
 
-## 🧠 Why n8n + GitHub?
+## ⚙️ Architecture
 
-This project was first **designed in n8n** to build a visual, low-code pipeline.  
-However, due to limitations in free-tier Docker-based hosting for 24/7 workflows,  
-the logic was **migrated to Python + GitHub Actions** for reliable, cost-free automation.
-
-The GitHub version runs a Python script every 15 minutes using cron,  
-pushing formatted coin data to Google Sheets and sending styled Telegram alerts.
-
-> ✅ The final system is production-ready and runs 100% free — with dashboards and alerts in real-time.
-
----
-
-## 🛠️ How It Works
-
-1. **`update_crypto_sheet.py`**:
-   - Fetches top 50 INR coins from CoinGecko
-   - Categorizes coins (Bullish, Sideways, Bearish)
-   - Formats INR values, emojis, and insight labels
-   - Logs structured rows to Google Sheets
-   - Sends one message per coin to Telegram using HTML formatting
-
-2. **`.github/workflows/crypto_alert.yml`**:
-   - Runs the script every 15 minutes using GitHub Actions
-   - Loads secrets from GitHub (Telegram token, GCP credentials)
-   - Requires no servers, no cron jobs, no Docker
+- `update_crypto_sheet.py` handles:
+  - API calls to CoinGecko
+  - Data formatting
+  - Google Sheets logging
+  - Telegram alerting
+- `crypto-update.yml` defines:
+  - Schedule: Every 15 minutes via cron
+  - Secrets: `GCP_CREDENTIALS` and `TELEGRAM_BOT_TOKEN`
+  - Execution steps with Python environment
 
 ---
 
-## 📂 Repo Structure
+## 📉 Data Inconsistency Analysis (GitHub Actions Approach)
 
-```
-.
-├── update_crypto_sheet.py         # Main script
-├── .github/
-│   └── workflows/
-│       └── crypto_alert.yml       # GitHub Action (cron trigger)
-├── assets/
-│   └── n8n_workflow.png           # Screenshot of original n8n design
-├── README.md                      # This file
-```
+We analyzed the **`Crypto-workflow` Google Sheet**, which logged 370 entries using GitHub-scheduled Python automation.
 
----
+| Metric                          | Value                              |
+|----------------------------------|-------------------------------------|
+| 🔢 Total trigger groups analyzed | **36** (from 370 rows)             |
+| ❗️Inconsistent triggers          | **36 instances**                   |
+| 🕓 Longest delay                 | **92.98 minutes** (~1h 33m)        |
+| ⏱️ Average delay (of all 36)     | **30.79 minutes**                  |
 
-## 📊 Dashboard Preview
+> These 36 instances represent cases where the expected 15-minute execution **did not occur on time** — even a 16-minute or 22-minute gap indicates missed triggers.
 
-📈 **Google Looker Studio Dashboard (Live)**  
-🔗 [Coming Soon – Public Link]
+> This confirms that **GitHub Actions cron jobs are not suitable for high-frequency or real-time automation**, especially when precise execution windows are required for analytics dashboards.
 
 ---
 
-## 📲 Telegram Channel
+## 📂 Repository Contents
 
-Join the real-time alert feed:  
-🔗 [@cryptopulsebot_in](https://t.me/cryptopulsebot_in)
-
----
-
-## 🔐 Environment Variables Required (Secrets)
-
-| Key                  | Purpose                          |
-|----------------------|----------------------------------|
-| `GCP_CREDENTIALS`    | Google Sheets service account JSON |
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot token for alerts     |
-
-These must be added as **GitHub Secrets** for the Actions workflow to function.
+| File                    | Description                                |
+|-------------------------|--------------------------------------------|
+| `update_crypto_sheet.py`| Python script that powers the workflow     |
+| `crypto-update.yml`     | GitHub Actions workflow definition         |
+| `requirements.txt`      | All dependencies used                      |
 
 ---
 
-## 🧠 Future Improvements
+## ❌ Why This Approach Failed
 
-- Add **ATH detection using real ATH price**
-- Detect **3h/6h trend reversals**
-- Add **volume spikes + anomaly alerts**
-- Enhance **Looker Studio dashboard** with trend filters and emoji KPIs
-- Add **historical sheet logging** for charting
-
----
-
-## 💼 Project Type
-
-- ✅ **Data Analyst Project**
-- ✅ **API Integration**
-- ✅ **Real-Time Alerting**
-- ✅ **Serverless Automation**
-- ✅ **Portfolio & Resume Showcase Ready**
+- **Unreliable Schedule**: GitHub's runners are not optimized for consistent interval-based jobs (like every 15 minutes).
+- **No Real Guarantee**: Even with correct cron syntax (`0,15,30,45 * * * *`), the job may not execute as expected due to:
+  - Runner availability
+  - Cold starts
+  - Global runner limitations
+- **Invisible Failures**: Triggers silently skipped without logging errors
+- **Result**: Gaps in time-series data → inaccurate dashboards
 
 ---
 
-## 🧑‍💻 Built With
+## 📊 What Did Work?
 
-- `Python 3.11`
-- `gspread`, `oauth2client`, `requests`
-- `GitHub Actions`
-- `Google Sheets + Looker Studio`
-- `Telegram Bot API`
-- `n8n 2025+` (for initial design)
+- Python script executed perfectly when run manually or locally
+- Telegram alerts worked with rich formatting
+- Google Sheets integration was smooth and append-only
+- The system works perfectly **if trigger execution is guaranteed exactly in 15 minutes everytime**
+
+---
+
+## 🐳 Future Solution → Dockerized n8n
+
+After this failed approach, the project was shifted to **n8n running inside Docker**, which:
+- Uses persistent workflows
+- Supports webhook triggers, CRONs, and retries
+- Doesn’t stop even when terminal closes
+- Offers more reliability for 24/7 systems
+---
+
+## 📚 Lessons Learned
+
+- GitHub Actions are **not suitable for real-time analytics bots**
+- For anything below 1-hour frequency, use **Docker, Cron on a VM, or Replit/GCP Functions**
+- Always analyze logs & results — automation can silently fail
+- Data integrity matters for time-sensitive dashboards
+
+---
+
+## 🔮 What’s Next?
+
+- Finalize the new Docker-hosted n8n automation
+- Build a **Looker Studio** dashboard on top of Google Sheets
+- Extend alerts with:
+  - ATH insights
+  - Volume anomaly detection
+  - Trend reversals (3h, 6h)
+- Integrate CoinMarketCap & Twitter API for sentiment + price prediction
 
 ---
 
