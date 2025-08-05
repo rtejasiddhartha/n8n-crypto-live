@@ -97,7 +97,7 @@ We analyzed the `Crypto-workflow` Google Sheet populated via GitHub Actions auto
 
 ## 📸 Screenshots & Visuals
 
-- ![n8n Workflow Screenshot](n8n_workflow.png)
+- ![n8n Workflow Screenshot](assets/n8n_workflow.png)
 
 ---
 
