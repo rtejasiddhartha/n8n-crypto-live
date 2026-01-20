@@ -27,8 +27,10 @@ and write results to Google Sheets, which were later consolidated.
 
 ## Script Ownership Clarification
 
-The file `scripts/update_crypto_sheet.py` is part of the
-**GitHub Actions ingestion pipeline**.
+The active ingestion pipeline **GitHub Actions ingestion pipeline** is implemented using GitHub Actions
+and executes the Python script located at:
+
+`00_foundation_crypto_ingestion/methods/github_actions/update_crypto_sheet.py`
 
 It is executed exclusively by the GitHub Actions workflow
 defined in `.github/workflows/crypto-update.yml`.
@@ -81,3 +83,6 @@ These characteristics are **intentional** and are addressed in
 
 > Data reliability is an operational problem, not just a coding problem.
 > Phase 0 focuses on understanding how data fails before attempting to fix it.
+
+The file `assets/n8n_ingestion_logical_workflow.png` illustrates the
+shared logical workflow used by both local and Docker-based n8n executions.
