@@ -35,13 +35,13 @@ outputs of the previous phase.
 
 ## Repository Structure (High Level)
 
-00_foundation_crypto_ingestion/ → Raw ingestion & reliability experiments
-01_data_preparation/ → Data cleaning, validation, data dictionary
-02_bigquery_warehouse/ → Cloud SQL modeling
-03_automation_orchestration/ → ETL orchestration
-04_powerbi_reporting/ → BI dashboards
-05_ml_forecasting/ → Forecasting & analytics
-06_ai_insights/ → AI-assisted insights
+- 00_foundation_crypto_ingestion/ → Raw ingestion & reliability experiments
+- 01_data_preparation/ → Data cleaning, validation, data dictionary
+- 02_bigquery_warehouse/ → Cloud SQL modeling
+- 03_automation_orchestration/ → ETL orchestration
+- 04_powerbi_reporting/ → BI dashboards
+- 05_ml_forecasting/ → Forecasting & analytics
+- 06_ai_insights/ → AI-assisted insights
 
 
 ---
