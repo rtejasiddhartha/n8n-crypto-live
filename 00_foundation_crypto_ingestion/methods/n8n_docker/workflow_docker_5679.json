@@ -1,0 +1,345 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "chatId": "336401497",
+        "text": "={{ $json[\"Trend Emoji\"]}} <b>Crypto Alert</b>: {{ $json.Coin }} ({{ $json.Symbol }})\n\n<b>Trend</b>: {{ $json.Trend }}\n<b>24h Change</b>: {{ $json[\"24h Change\"] }}\n<b>Current Price</b>: {{ $json[\"Current Price\"] }}\n<b>Market Cap</b>: {{ $json[\"Market Cap\"] }}\n<b>24h Volume</b>: {{ $json[\"24h Volume\"] }} \n<b>Global Rank</b>: {{ $json[\"Global Rank\"] }}\n\n<b>ATH Insight</b>: {{ $json[\"ATH Insight\"] }}\n<b>24h Range</b>: {{ $json[\"24h Range\"] }}\n<b>Volatility</b>: {{ $json.Volatility }}\n\n📊 <a href=\"{{ $json[\"Chart Link\"] }}\">View Chart</a>\n\n📅 Updated: {{ $json[\"Updated At\"] }}\n📈 Data Source: CoinGecko (INR)\n🔁 Triggered by: n8n 2025+ Automation",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        384
+      ],
+      "id": "a9446e29-706b-44ca-9345-9bb513792455",
+      "name": "Send a text message",
+      "webhookId": "d72f65a2-79ff-4683-9ce6-376a9817dddc",
+      "credentials": {
+        "telegramApi": {
+          "id": "ziLl8cUnj6yN0UXZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&order=market_cap_desc&per_page=50&page=1&sparkline=false",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        432
+      ],
+      "id": "f401e858-f2ea-4363-9819-42312afaed61",
+      "name": "HTTP Request -  CoinGecko INR"
+    },
+    {
+      "parameters": {
+        "jsCode": "const coins = $input.all().map(i => i.json);\nconst timeNow = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });\n\nfunction formatCoin(coin, trendEmoji, trendLabel) {\n  const priceINR = `₹${coin.current_price.toLocaleString('en-IN')}`;\n  const change = `${coin.price_change_percentage_24h > 0 ? '+' : ''}${coin.price_change_percentage_24h.toFixed(2)}%`;\n  const marketCap = `₹${coin.market_cap.toLocaleString('en-IN')}`;\n  const volume = `₹${coin.total_volume.toLocaleString('en-IN')}`;\n  const volumeTrend = coin.total_volume > coin.market_cap * 0.05 ? '🔺' : '🔻';\n  const rank = `#${coin.market_cap_rank}`;\n  const chartLink = `https://www.coingecko.com/en/coins/${coin.id}`;\n\n  // ATH Insight\n  const athDistance = ((coin.ath - coin.current_price) / coin.ath) * 100;\n  const athLabel = athDistance < 10 ? '🟢 Near ATH' :\n                   athDistance < 25 ? '🟡 Watch Zone' :\n                   '🔴 Far Below ATH';\n\n  // 24h Range Insight\n  const high = coin.high_24h;\n  const low = coin.low_24h;\n  let rangePos = ((coin.current_price - low) / (high - low)) * 100;\n  rangePos = Math.min(Math.max(rangePos, 0), 100);\n  const rangeLabel = rangePos >= 80 ? '🔼 Near 24h High' :\n                     rangePos <= 20 ? '🔽 Near 24h Low' :\n                     '⚖️ In the Middle';\n  const rangeStr = `${rangeLabel} (${rangePos.toFixed(1)}%)`;\n\n  // Volatility Score\n  const volatility = ((high - low) / coin.current_price) * 100;\n  const volatilityBadge = volatility > 10 ? '🔥 High Volatility' :\n                          volatility > 5 ? '🟦 Medium Volatility' :\n                                           '🟩 Low Volatility';\n\n  return {\n    json: {\n      message: `${trendEmoji} <b>Crypto Alert</b>: ${coin.name} (${coin.symbol?.toUpperCase()})\n<b>Trend</b>: ${trendLabel}\n<b>24h Change</b>: ${change}\n<b>Current Price</b>: ${priceINR}\n<b>Market Cap</b>: ${marketCap}\n<b>24h Volume</b>: ${volume} ${volumeTrend}\n<b>Global Rank</b>: ${rank}\n\n<b>ATH Insight</b>: ${athLabel}\n<b>24h Range</b>: ${rangeStr}\n<b>Volatility</b>: ${volatilityBadge}\n\n📊 <a href=\"${chartLink}\">View Chart</a>\n\n📅 Updated: ${timeNow}\n📈 Data Source: CoinGecko (INR)\n🔁 Triggered by: n8n 2025+ Automation`\n    }\n  };\n}\n\n// Split categories and format\nconst bullish = coins\n  .filter(c => c.price_change_percentage_24h >= 5)\n  .sort((a, b) => Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h))\n  .slice(0, 5)\n  .map(c => formatCoin(c, '🚀', 'Bullish 🔥'));\n\nconst bearish = coins\n  .filter(c => c.price_change_percentage_24h <= -5)\n  .sort((a, b) => Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h))\n  .slice(0, 5)\n  .map(c => formatCoin(c, '📉', 'Bearish ❄️'));\n\nconst sideways = coins\n  .filter(c => Math.abs(c.price_change_percentage_24h) < 5)\n  .sort((a, b) => Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h))\n  .slice(0, 5)\n  .map(c => formatCoin(c, '⚖️', 'Sideways ⚖️'));\n\nreturn [...bullish, ...bearish, ...sideways];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        272
+      ],
+      "id": "382a22d1-231b-4998-8d0e-ff5c6d31db7b",
+      "name": "ALL LOGIC"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        128
+      ],
+      "id": "d8c3e98d-d049-48ed-ba1f-f5332bfad96f",
+      "name": "Every 15 minutes"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg",
+          "mode": "list",
+          "cachedResultName": "n8n Crypto Pulse",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 498936928,
+          "mode": "list",
+          "cachedResultName": "CryptoPulse-5679",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Yc1DidfDwlaLDT3rpAnEJII4Y1vbrfTe5Ub4ZEUylsg/edit#gid=498936928"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Coin": "={{$json[\"name\"]}}",
+            "Symbol": "={{$json[\"symbol\"]}}",
+            "Trend": "={{$json[\"trend\"]}}",
+            "24h Change": "={{$json[\"price_change_24h\"]}}",
+            "Current Price": "={{$json[\"current_price\"]}}",
+            "Market Cap": "={{$json[\"market_cap\"]}}",
+            "24h Volume": "={{$json[\"volume_24h\"]}}",
+            "Global Rank": "={{$json[\"global_rank\"]}}",
+            "ATH Insight": "={{$json[\"ath_label\"]}}",
+            "24h Range": "={{$json[\"range_label\"]}}",
+            "Volatility": "={{$json[\"volatility\"]}}",
+            "Chart Link": "={{$json[\"chart_link\"]}}",
+            "Updated At": "={{$json[\"updated_at\"]}}",
+            "Trend Emoji": "={{$json[\"trend_emoji\"]}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Coin",
+              "displayName": "Coin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Symbol",
+              "displayName": "Symbol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Trend Emoji",
+              "displayName": "Trend Emoji",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Trend",
+              "displayName": "Trend",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "24h Change",
+              "displayName": "24h Change",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Current Price",
+              "displayName": "Current Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Market Cap",
+              "displayName": "Market Cap",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "24h Volume",
+              "displayName": "24h Volume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Global Rank",
+              "displayName": "Global Rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ATH Insight",
+              "displayName": "ATH Insight",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "24h Range",
+              "displayName": "24h Range",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Volatility",
+              "displayName": "Volatility",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Chart Link",
+              "displayName": "Chart Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        160,
+        384
+      ],
+      "id": "7b53f2b1-e4bf-429d-b567-5bac25495aa7",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bXsK1RYyzlh37IP8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const msg = item.json.message;\n\n  const getValue = (label) => {\n    const regex = new RegExp(`<b>${label}</b>:\\\\s*(.*?)\\\\n`);\n    const match = msg.match(regex);\n    return match ? match[1].trim() : '';\n  };\n\n  const coinMatch = msg.match(/<\\/b>:\\s*(.*?)\\s\\((.*?)\\)/);\n  const trendEmojiMatch = msg.match(/^(\\S+)/); // Extracts the emoji at the very start\n  const trendEmoji = trendEmojiMatch ? trendEmojiMatch[1] : '';\n\n  return {\n    json: {\n      trend_emoji: trendEmoji,\n      name: coinMatch ? coinMatch[1] : '',\n      symbol: coinMatch ? coinMatch[2] : '',\n      trend: getValue(\"Trend\"),\n      price_change_24h: getValue(\"24h Change\"),\n      current_price: getValue(\"Current Price\"),\n      market_cap: getValue(\"Market Cap\"),\n      volume_24h: getValue(\"24h Volume\"),\n      global_rank: getValue(\"Global Rank\").replace('#', ''),\n      ath_label: getValue(\"ATH Insight\"),\n      range_label: getValue(\"24h Range\"),\n      volatility: getValue(\"Volatility\"),\n      chart_link: (msg.match(/<a href=\"(.*?)\">/) || [])[1] || '',\n      updated_at: (msg.match(/📅 Updated: (.*?)\\n/) || [])[1] || '',\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        224
+      ],
+      "id": "08b45580-41ef-4972-9a56-41b0f681693e",
+      "name": "Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request -  CoinGecko INR": {
+      "main": [
+        [
+          {
+            "node": "ALL LOGIC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ALL LOGIC": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 15 minutes": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request -  CoinGecko INR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e6a3648d-7398-4462-99ed-c2a7396cc84f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "639044bbc339ee505cb250be16b762491b23a75151de6de39104b597602c3604"
+  },
+  "id": "c6ssOYI5yw5xBmS5",
+  "tags": []
+}
