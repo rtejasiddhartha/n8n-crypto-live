@@ -8,8 +8,6 @@ The project mirrors a **real-world analytics lifecycle** — from ingestion and 
 modeling to BI consumption and AI interpretation — with deliberate trade-offs around
 **cost, scalability, and architectural clarity**.
 
-> This project is **not a trading system** and provides **no predictions or financial advice**.
-
 ---
 
 ## High-Level Architecture
