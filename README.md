@@ -1,71 +1,112 @@
-# CryptoLens AI — Cloud-Based Crypto Analytics with ML & AI Insights
+# CryptoLens AI — End-to-End Crypto Analytics (BI + AI)
 
-CryptoLens AI is a **cloud-based analytics platform** designed to demonstrate
-end-to-end data analytics workflows, from **raw data ingestion** to
-**machine learning and AI-assisted insights**.
+CryptoLens AI is a **personal analytics project** that demonstrates how raw crypto
+market data can be transformed into **interactive business dashboards** and
+**AI-assisted market insights** using modern analytics and cloud tooling.
 
-The project is built incrementally in **clearly defined phases**, mirroring
-how real-world analytics platforms evolve in production environments.
+The project is built incrementally, following a **realistic analytics lifecycle**
+—from ingestion to reporting to AI—while consciously balancing **scope, cost,
+and engineering trade-offs**.
 
 ---
 
-## Project Vision
+## What This Project Demonstrates
 
-The goal of CryptoLens AI is to showcase practical, job-ready skills across:
+- Automated crypto data ingestion
+- Data cleaning and preparation
+- Cloud data warehousing
+- Analytical modeling (facts & dimensions)
+- Business intelligence dashboards
+- AI-assisted market commentary
+- Lightweight application deployment
 
-- Automated data ingestion and monitoring
-- Data preparation and quality handling
-- Cloud SQL warehousing
-- Business intelligence and reporting
-- Forecasting and analytical modeling
-- AI-assisted insight generation for decision-making
+---
 
-Each phase focuses on **one stage of the data lifecycle** and builds on the
-outputs of the previous phase.
+## Project Evolution (What Was Actually Built)
+
+### Phase 0 — Data Ingestion (n8n)
+- Implemented crypto market ingestion using **n8n**
+- Focused on reliability, retries, and real-world data imperfections
+- Established raw data pipelines for downstream analytics
+
+### Phase 1 — Data Preparation
+- Cleaned and normalized raw crypto data
+- Handled missing values and inconsistent records
+- Produced a stable dataset (`crypto_cleaned_v1.csv`) for analytics
+
+### Phase 2 — Cloud Warehouse (BigQuery)
+- Loaded cleaned data into **BigQuery**
+- Designed **fact and dimension tables**
+- Structured schema for analytical and BI workloads
+
+### Phase 3 — Business Intelligence (Power BI)
+- Connected Power BI directly to BigQuery
+- Built multi-page dashboards:
+  - Market overview
+  - Coin-level metrics
+  - ATH proximity analysis
+  - Momentum trends
+- Dashboards reflect real analytical transformations, not static mock data
+
+### Phase 4 — Application Layer (Streamlit)
+- Embedded Power BI dashboards inside **Streamlit**
+- Created a single interface for analytics + insights
+- Kept frontend simple and analytics-focused
+
+### Phase 5 — AI-Assisted Insights (Gemini)
+- Integrated **Gemini AI** to generate:
+  - Market summaries
+  - Momentum explanations
+  - ATH risk context
+- Insights are:
+  - Observational only
+  - Based on dashboard-level aggregates
+  - Rate-limited to control API usage and cost
+
+> Live AI generation on every dashboard interaction was intentionally avoided.
+> This project prioritizes **architecture clarity and cost awareness** over
+> high-frequency AI calls.
 
 ---
 
 ## Current Status
 
-- ✅ **Phase 0 — Data Ingestion & Reliability Exploration** (Completed)
-- 🚧 **Phase 1 — Data Preparation & Quality Handling** (In Progress)
-- ⏳ **Phase 2+ — Cloud Analytics, ML & AI Insights** (Planned)
+- ✅ Ingestion → Cleaning → Warehouse → BI → AI insights fully connected
+- ✅ Deployed using Streamlit Cloud
+- ✅ Gemini insights working with controlled usage
+- ❌ Real-time AI per slicer interaction (by design)
 
 ---
 
-## Repository Structure (High Level)
+## Repository Structure (Simplified)
 
-- 00_foundation_crypto_ingestion/ → Raw ingestion & reliability experiments
-- 01_data_preparation/ → Data cleaning, validation, data dictionary
-- 02_bigquery_warehouse/ → Cloud SQL modeling
-- 03_automation_orchestration/ → ETL orchestration
-- 04_powerbi_reporting/ → BI dashboards
-- 05_ml_forecasting/ → Forecasting & analytics
-- 06_ai_insights/ → AI-assisted insights
+n8n-crypto-live/
+│ (n8n workflows)
+│
+├── 00_foundation_crypto_ingestion/ # Ingestion & reliability
+├── 01_data_preparation/ # Cleaning & validation
+├── ai_insights_layer_02/ # Gemini insight logic
+├── streamlit_app_03/ # Streamlit application
+├── requirements.txt
+└── README.md
 
 
 ---
 
 ## Design Principles
 
-- **Realistic data**: Raw data is intentionally imperfect to reflect
-  real production ingestion behavior.
-- **Clear ownership**: Each phase explicitly documents tools, responsibilities,
-  and execution boundaries.
-- **Free-tier first**: The platform prioritizes free and accessible tooling
-  wherever possible.
-- **Explainability**: Architectural and analytical decisions are documented,
-  not hidden.
+- **Realistic data**: Raw data is intentionally imperfect
+- **Explainability**: Metrics and insights are transparent and traceable
+- **Free-tier first**: Tools chosen with cost awareness
+- **Progressive build**: Each phase builds on the previous one
+- **No hype**: Observations over predictions, analytics over speculation
 
 ---
 
-## Notes
+## Final Note
 
-- Detailed implementation lives **inside each phase folder**
-- This root README intentionally remains **high-level**
-- The repository will evolve as additional phases are completed
+CryptoLens AI is not a trading system.
 
----
-
-> CryptoLens AI is not a single script or dashboard — it is a documented
-> analytics journey from raw data to intelligent insight.
+It is a **documented analytics journey** showing how raw data becomes
+dashboards and how dashboards can be translated into **clear, AI-assisted
+market insights**—built the way real analytics platforms evolve.
