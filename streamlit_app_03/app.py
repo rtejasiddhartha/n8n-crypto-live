@@ -1,6 +1,9 @@
-from dotenv import load_dotenv
-load_dotenv()
-
+# Load dotenv ONLY if available (local dev)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ModuleNotFoundError:
+    pass
 import streamlit as st
 import sys
 import os
@@ -10,7 +13,6 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(ROOT_DIR)
 
 from ai_insights_layer_02.gemini_insights import generate_full_market_insight
-
 
 # ---------------------------------------------------------
 # Page Config

@@ -10,26 +10,42 @@ Design goals:
 - Safe for public deployment
 """
 
-# ---------------------------------------------------------
-# 1. Imports
-# ---------------------------------------------------------
-
 import os
 import time
 from datetime import datetime
 from typing import Dict
+
+import streamlit as st
 from google import genai
 
+# ------------------------------------------------------------
+# API KEY RESOLUTION (LOCAL + CLOUD SAFE)
+# ------------------------------------------------------------
 
-# ---------------------------------------------------------
-# 2. Gemini Client
-# ---------------------------------------------------------
+def get_api_key() -> str:
+    # 1. Try Streamlit secrets (Cloud or local secrets.toml)
+    try:
+        if "GOOGLE_API_KEY" in st.secrets:
+            return st.secrets["GOOGLE_API_KEY"]
+    except Exception:
+        pass  # secrets.toml does not exist locally
+
+    # 2. Fallback to environment variable (.env or OS)
+    return os.getenv("GOOGLE_API_KEY")
+
+
+API_KEY = get_api_key()
+
+if not API_KEY:
+    raise RuntimeError("GOOGLE_API_KEY not found in environment or Streamlit secrets")
+
+# ------------------------------------------------------------
+# Gemini Client
+# ------------------------------------------------------------
 
 MODEL_NAME = "gemini-2.0-flash"
 
-client = genai.Client(
-    api_key=os.getenv("GOOGLE_API_KEY")
-)
+client = genai.Client(api_key=API_KEY)
 
 
 # ---------------------------------------------------------
