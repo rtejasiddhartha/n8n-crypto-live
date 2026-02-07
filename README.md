@@ -172,3 +172,15 @@ n8n-crypto-live/
 ├── streamlit_app_03/
 ├── requirements.txt
 └── README.md
+
+---
+
+## 👤 Author
+
+**R. Teja Siddhartha**
+
+- 💼 LinkedIn: https://linkedin.com/in/rtejasiddhartha  
+- 💻 GitHub: https://github.com/rtejasiddhartha  
+- 📧 Email: rtejasiddhartha18@gmail.com  
+
+---
