@@ -1,4 +1,4 @@
-# CryptoLens AI — End-to-End Crypto Analytics (BI + AI)
+# CryptoLens AI — End-to-End Crypto Analytics
 
 CryptoLens AI is a **personal analytics engineering project** that demonstrates how
 raw cryptocurrency market data can be transformed into **structured analytics,
@@ -160,7 +160,7 @@ Alerts are designed for **situational awareness**, not trading signals.
 
 ## Repository Structure
 
-```text
+<pre>
 n8n-crypto-live/
 │
 ├── assets/
@@ -172,7 +172,7 @@ n8n-crypto-live/
 ├── streamlit_app_03/
 ├── requirements.txt
 └── README.md
-
+</pre>
 ---
 
 ## 👤 Author
